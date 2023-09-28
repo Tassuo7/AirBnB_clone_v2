@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """
+Write a script that
 Start a Flask web application
+Your web application must be listening
 """
 
 from flask import Flask, render_template
@@ -18,7 +20,7 @@ def states_list():
 
 @app.teardown_appcontext
 def teardown_db(exception=None):
-    """Close the storage"""
+    """Close the storage or remove the current SQLAlchemy Session"""
     storage.close()
 
 
