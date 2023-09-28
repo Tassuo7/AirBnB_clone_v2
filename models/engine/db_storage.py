@@ -4,6 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from models.base_model import Base, BaseModel
 import os
+from models.user import User
+from models.city import City
+from models.state import State
+from models.amenity import Amenity
+from models.review import Review
+from models.base_model import BaseModel
+from models.place import Place
+classes = [User, State, City, Amenity, Place, Review]
 
 
 class DBStorage:
@@ -15,46 +23,31 @@ class DBStorage:
 
     def __init__(self):
         """Public instance method"""
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}:3306/{}'.
-                                      format(os.getenv('HBNB_MYSQL_USER'),
-                                             os.getenv('HBNB_MYSQL_PWD'),
-                                             os.getenv('HBNB_MYSQL_HOST'),
-                                             os.getenv('HBNB_MYSQL_DB')),
-                                      pool_pre_ping=True)
+        user = os.getenv('HBNB_MYSQL_USER')
+        pwd = os.getenv('HBNB_MYSQL_PWD')
+        host = os.getenv('HBNB_MYSQL_HOST')
+        db = os.getenv('HBNB_MYSQL_DB')
+        self.__engine = create_engine(
+                "mysql+mysqldb://{}:{}@{}/{}".format(user, pwd, host, db),
+                pool_pre_ping=True)
         if os.getenv('HBNB_ENV') == 'test':
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
         """
         Method to retrieve all objects"""
-        from models.user import User
-        from models.city import City
-        from models.state import State
-        from models.amenity import Amenity
-        from models.review import Review
-        from models.base_model import BaseModel
-        from models.place import Place
-
-        clas = {'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                'State': State, 'City': City, 'Amenity': Amenity,
-                'Review': Review}
         if cls:
-            new_d = {}
-            allC_obj = self.__session.query(cls).all()
-            for o in allC_obj:
-                k = type(o).__name__ + "." + o.id
-                new_d[key] = o
-            return (new_d)
+            obj = self.__session.query(cls).all()
+            for o in obj:
+                k = "{}.{}".format(type(o).__name__, o.id)
+                objs[k] = o
         else:
-            all_d = {}
-            dic_l = []
-            State = self.all('State')
-            City = self.all('City')
-            dic_l.append(State)
-            dic_l.append(City)
-            for d in dic_l:
-                all_d.update(d)
-            return(all_d)
+            for c in classes:
+                obj = self.__session.query(c).all()
+                for o in obj:
+                    k = "{}.{}".format(type(o).__name__, o.id)
+                    objs[k] = o
+        return objs
 
     def new(self, obj):
         """add ibjet to db"""
@@ -82,4 +75,4 @@ class DBStorage:
     def close(self):
         """
         Method close session"""
-        self.__session.close()
+        self.__session.remove()
